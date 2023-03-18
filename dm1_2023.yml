@@ -1,0 +1,12 @@
+name: dm1_2023
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - more-itertools
+  - requests
+  - nltk
+prefix: /miniconda3/envs/dm1_2023

@@ -2,10 +2,9 @@
 import csv
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 
-from sklearn.tree import DecisionTreeClassifier # Import Decision Tree Classifier
+from sklearn.tree import DecisionTreeClassifier  # Import Decision Tree Classifier
 
 
 # Part 1: Decision Trees with Categorical Attributes
@@ -13,26 +12,9 @@ from sklearn.tree import DecisionTreeClassifier # Import Decision Tree Classifie
 # Return a pandas dataframe containing the data set that needs to be extracted from the data_file.
 # data_file will be populated with the string 'adult.csv'.
 def read_csv_1(data_file):
-    try:
-        # if column_names function available
-        col_names = column_names(None)
-    except Exception as x:
-        # if column_names function not available
-        col_names = []
-        print('reading column names from adult.names ')
-        # open data file in csv format
-        f = open('adult.names', encoding='unicode_escape')
-        # read contents of data file into "rawdata" list
-        rawdata0 = csv.reader(f)
-        # parse data in csv format
-        rawdata = [rec for rec in rawdata0]
-
-        for i in range(14):
-            col_names.append((rawdata[i - 14][0].split(':', 1))[0])
-        col_names.append('class')
-
-    df = pd.read_csv(data_file, index_col=False, header=None, skipinitialspace=True, names=col_names)
-    df = df.drop(['fnlwgt'], axis=1)
+    # read csv data and drop column 'fnlwgt'
+    df = pd.read_csv(data_file, index_col=False, skipinitialspace=True).drop(['fnlwgt'], axis=1)
+    # replace null values ('?') in data
     df.replace(to_replace=[r' ?', r'?', r'? ', r' ', r''], value=[np.nan, np.nan, np.nan, np.nan, np.nan], regex=False,
                inplace=True)
 
@@ -47,39 +29,24 @@ def num_rows(df):
 
 # Return a list with the column names in the pandas dataframe df.
 def column_names(df):
-    data_colname = []
-    try:
-        data_colname = [col_name for col_name in df.columns]
-    except Exception as x:
-        # -get data from a file
-        print('reading column names from adult.names ')
-        # open data file in csv format
-        f = open('adult.names', encoding='unicode_escape')
-        # read contents of data file into "rawdata" list
-        rawdata0 = csv.reader(f)
-        # parse data in csv format
-        rawdata = [rec for rec in rawdata0]
-
-        for i in range(14):
-            # print ((rawdata [-i-1][0].split(':', 1))[0])
-            data_colname.append((rawdata[i - 14][0].split(':', 1))[0])
-        data_colname.append('class')
-
-        # print (data_colname)
+    # create the list of col names
+    data_colname = [col_name for col_name in df.columns]
     return data_colname
 
 
 # Return the number of missing values in the pandas dataframe df.
 def missing_values(df):
-    data_isnull = df.isnull().sum()
-    return data_isnull
+    # calculate the sum of null (missing) values in dataframe
+    miss_val = sum(df.isnull().sum())
+    return miss_val
 
 
 # Return a list with the columns names containing at least one missing value in the pandas dataframe df.
 def columns_with_missing_values(df):
-    data_isnull = missing_values(df)
-    data_col_isnull = data_isnull[data_isnull > 0]
-    # data_col_isnull = df.columns[df.isnull().any()].tolist()  # to get a list instead of an Index object
+    # count of column of null (missing) values in dataframe
+    data_isnull = df.isnull().sum()
+    # select only the column of null (missing) values in dataframe and convert to list
+    data_col_isnull = data_isnull[data_isnull > 0].index.values.tolist()
     return data_col_isnull
 
 
@@ -111,17 +78,12 @@ def data_frame_without_missing_values(df):
 # The function should not encode the target attribute, and the function's output
 # should not contain the target attribute.
 def one_hot_encoding(df):
-    # creating instance of OneHotEncoder
-    onehot_encoder = OneHotEncoder(sparse=False)
 
-    # object one-hot within same column
-    # for column in df:
-    #    if ((df[column].dtype == object) & (column.lower().strip() != 'class')) :
-    # df[column] = pd.Series(onehot_encoder.fit_transform(pd.DataFrame(df[column])).tolist())
-
-    # seperate one-hot within columns
+    # seperate one-hot categorical names within columns
     columns = [column for column in df if ((df[column].dtype == object) & (column.lower().strip() != 'class'))]
+    # get one hot encodings
     df_dummy = pd.get_dummies(df[columns])
+    # remove processed class column and add back the old version of data
     df_class = df[df.columns[-1]]
     df = df.join(df_dummy).drop(columns, axis=1).drop(df.columns[-1], axis=1)
     df = df.join(df_class)
@@ -135,7 +97,7 @@ def one_hot_encoding(df):
 def label_encoding(df):
     # creating instance of labelencoder
     labelencoder = LabelEncoder()
-    #     df[df.columns[-1]] = pd.Series(labelencoder.fit_transform(pd.DataFrame(df[df.columns[-1]])).tolist())
+    # encode the class column
     df[df.columns[-1]] = labelencoder.fit_transform(df[df.columns[-1]])
 
     return df
@@ -148,10 +110,8 @@ def label_encoding(df):
 def dt_predict(X_train, y_train):
     # Create Decision Tree classifer object
     clf = DecisionTreeClassifier()
-
     # Train Decision Tree Classifer
     clf = clf.fit(X_train, y_train)
-
     # Predict the response for train dataset
     y_pred = clf.predict(X_train)
 
@@ -161,18 +121,20 @@ def dt_predict(X_train, y_train):
 # Given a pandas series y_pred with the predicted labels and a pandas series y_true with the true labels,
 # compute the error rate of the classifier that produced y_pred.  
 def dt_error_rate(y_pred, y_true):
+    # error rate = (ypred != ytrue) / Total number of observation
     err_rate = sum(y_pred.to_numpy(dtype=float) != y_true.to_numpy(dtype=float)) / y_true.shape[0]
     return round(err_rate, 3)
 
 
-# testing
+# test Script
 if __name__ == "__main__":
     # 1. [10 points] Read the data set and compute: (a) the number of instances, (b) a list with the
     # attribute names, (c) the number of missing values, (d) a list of the attribute names with at
     # least one missing value, and (e) the percentage of instances corresponding to individuals whose
     # education level is Bachelors or Masters (real number rounded to the first decimal digit).
 
-    df = read_csv_1('adult.data')
+    # read adult.csv
+    df = read_csv_1('adult.csv')
 
     # 1.a.
     r = num_rows(df)
@@ -181,11 +143,14 @@ if __name__ == "__main__":
     listname = column_names(df)
     print('1.b. column_names:\n', listname)
     # 1.c
-    data_isnull = columns_with_missing_values(df)
-    print('1.c. columns_with_missing_values:\n', data_isnull.to_string())
+    num_miss = missing_values(df)
+    print('1.c. number of missing values:\n', str(num_miss))
     # 1.d
+    data_isnull = columns_with_missing_values(df)
+    print('1.d. columns_with_missing_values:\n', data_isnull)
+    # 1.e
     uniq_n = bachelors_masters_percentage(df)
-    print('1.d. bachelors_masters_percentage:\n', uniq_n)
+    print('1.e. bachelors_masters_percentage:\n', uniq_n)
 
     # 2.[10 points] Drop all instances with missing values. Convert all attributes (except the class) to
     # numeric using one-hot encoding. Name the new columns using attribute values from the original
@@ -193,7 +158,7 @@ if __name__ == "__main__":
     df = data_frame_without_missing_values(df)
     # 2.a
     data_isnull = columns_with_missing_values(df)
-    print('2.a. columns_with_missing_values:\n', data_isnull.to_string())
+    print('2.a. columns_with_missing_values after dropping NAN:\n', data_isnull)
     # 2.b
     df = one_hot_encoding(df)
     # 2.c

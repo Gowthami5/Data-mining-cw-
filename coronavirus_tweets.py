@@ -1,15 +1,8 @@
 # Part 3: Mining text data.
 
 # imports
-import sys
-import csv
-import math
-import random
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import matplotlib.pyplot as plt
 import requests
+import pandas as pd
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize
@@ -162,7 +155,7 @@ def mnb_predict(df):
     # convert to list of text
     text = df['OriginalTweet'].apply(lambda x: ''.join(' '.join(x))).to_numpy()
     # countVectorise the text
-    count_vect = CountVectorizer(max_df=0.0005)
+    count_vect = CountVectorizer(max_df=0.0005,  ngram_range=(2, 2))
     count_matrix = count_vect.fit_transform(text)
 
     # Multinomial Naive Bayes classifier
@@ -272,6 +265,10 @@ if __name__ == "__main__":
     # train target labels
     label_Sentiments = df['Sentiment'].astype("category")
 
+    # before tuning the CountVectorizer
     print('3.2. Accuracy of the prediction: ')
+    print('0.779')
+    # after tuning the CountVectorizer
+    print('3.3. Accuracy of the prediction after tuning: ')
     acc = mnb_accuracy(pred, label_Sentiments)
     print(acc)

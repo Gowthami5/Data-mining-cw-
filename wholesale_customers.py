@@ -184,7 +184,9 @@ def cluster_evaluation(df):
 # return the best computed Silhouette score.
 def best_clustering_score(rdf):
     # evaluation dataframe
-    eval_df = rdf.max()
+    value = rdf['Silhouette Score'].idxmax()
+    # Using DataFrame.loc[] property.
+    eval_df = rdf.loc[value]
 
     return eval_df['Silhouette Score']
 
@@ -195,9 +197,9 @@ def best_clustering_score(rdf):
 def scatter_plots(df):
 
     # generate clusers for the best model found
-    # (Algorithm: Kmeans, data: Standardized, k: 10, Silhouette Score: 0.548289)
+    # (Algorithm: Kmeans, data: Standardized, k: 3, Silhouette Score: 0.548289)
     dfstd = standardize(df)
-    group = kmeans(dfstd, 10)
+    group = kmeans(dfstd, 3)
 
     fig, ax = plt.subplots(5, 3, figsize=(10, 10))
 
